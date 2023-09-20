@@ -9,7 +9,10 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /usr/bin/ps-bot-2 .
 
 FROM debian:stable-slim
+WORKDIR /opt/discordbot
 RUN apt-get update && apt-get install ca-certificates -y
 COPY --from=builder /usr/bin/ps-bot-2 /usr/bin/ps-bot-2
+COPY --from=builder /usr/src/ps-bot-2/web /opt/discordbot/web
+ADD assets /opt/discordbot/assets
 
-CMD ["/usr/bin/ps-bot-2"]
+CMD ["/usr/bin/ps-bot-2", "discord"]

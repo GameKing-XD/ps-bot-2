@@ -18,4 +18,8 @@ services:
                         MINIO_ROOT_PASSWORD: theadminuser
                         MINIO_DEFAULT_BUCKETS: sounds:public
                         MINIO_SKIP_CLIENT: yes
-
+        rabbitmq:
+                image: rabbitmq:3-management
+                ports:
+                        - 127.0.0.1:5672:5672
+                        - 127.0.0.1:15672:15672

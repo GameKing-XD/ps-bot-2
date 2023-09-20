@@ -14,6 +14,10 @@ func NewListCommand(store *soundstore.SoundStore) *ListCommand {
 func (l *ListCommand) Name() string {
 	return "pslist"
 }
+
+func (l *ListCommand) SkipsPrefix() bool {
+	return false
+}
 func (l *ListCommand) Apply(ctx *Context) error {
 
 	ctx.ReplyList(l.store.List(ctx.Message.GuildID))

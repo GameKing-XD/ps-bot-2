@@ -13,6 +13,8 @@ type GuildModel struct {
 	Snowflake    string
 	Voicechannel string
 	Prefix       string
+	Name         string
+	Icon         string
 }
 
 type GuildRepository struct {
@@ -31,7 +33,7 @@ func MigrateGuildRepo(g *GuildRepository) error {
 	)
 }
 
-func (g *GuildRepository) LoadGuild(guildId string) {
+func (g *GuildRepository) LoadGuild(guildId, name, icon string) {
 	var model GuildModel
 	tx := g.db.First(&model, "snowflake = ?", guildId)
 
@@ -39,7 +41,13 @@ func (g *GuildRepository) LoadGuild(guildId string) {
 		g.db.Create(&GuildModel{
 			Snowflake: guildId,
 			Prefix:    DEFAULT_PREFIX,
+			Name:      name,
+			Icon:      icon,
 		})
+	} else {
+		model.Name = name
+		model.Icon = icon
+		g.db.Save(&model)
 	}
 
 }
@@ -49,7 +57,7 @@ func (g *GuildRepository) GetVoiceChannels() map[string]string {
 	m := make(map[string]string)
 
 	var models []GuildModel
-	tx := g.db.Find(models, "voicechannel != ''")
+	tx := g.db.Find(&models, "voicechannel != ''")
 	if tx.Error != nil {
 		return m
 	}
@@ -92,5 +100,22 @@ func (g *GuildRepository) GetVoiceChannel(guildId string) string {
 	}
 
 	return channelId
+
+}
+
+func (g *GuildRepository) GetGuilds() map[string]string {
+
+	m := make(map[string]string)
+
+	var models []GuildModel
+	tx := g.db.Find(&models, "voicechannel != ''")
+	if tx.Error != nil {
+		return m
+	}
+
+	for i := range models {
+		m[models[i].Snowflake] = models[i].Name
+	}
+	return m
 
 }

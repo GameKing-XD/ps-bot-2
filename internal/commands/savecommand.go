@@ -2,6 +2,7 @@ package commands
 
 import (
 	"github.com/tvanriel/cloudsdk/kubernetes"
+	"go.uber.org/zap"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,13 +17,19 @@ type SaveCommand struct {
 	secretName string
 	bucketName string
 	kubernetes *kubernetes.KubernetesClient
+        log *zap.Logger
 }
 
-func NewSaveCommand(k *kubernetes.KubernetesClient, config *SaverConfiguration) *SaveCommand {
+func (s *SaveCommand) SkipsPrefix() bool {
+	return false
+}
+
+func NewSaveCommand(k *kubernetes.KubernetesClient, config *SaverConfiguration, l *zap.Logger) *SaveCommand {
 	return &SaveCommand{
 		kubernetes: k,
 		bucketName: config.BucketName,
 		secretName: config.SecretName,
+                log: l,
 	}
 }
 
@@ -42,12 +49,17 @@ func (s *SaveCommand) Apply(ctx *Context) error {
 		return nil
 	}
 
-	err := s.kubernetes.RunJob(convertJob(ctx.Message.Attachments[0].URL, ctx.Message.GuildID, ctx.Args[0], s.secretName, s.bucketName))
-	if err != nil {
-		ctx.Reply(err.Error())
-	}
+        url := ctx.Message.Attachments[0].URL
+        guildId := ctx.Message.GuildID
+        soundName := ctx.Args[0]
 
-	return nil
+        s.log.Info("Pushing job to Kubernetes",
+                zap.String("url", url),
+                zap.String("guildId", guildId),
+                zap.String("soundName", soundName),
+        )
+        
+	return s.kubernetes.RunJob(convertJob(url, guildId, soundName, s.secretName, s.bucketName))
 }
 
 func convertJob(url, namespace, name, secretName, bucketName string) *batchv1.Job {
@@ -76,6 +88,10 @@ func convertJob(url, namespace, name, secretName, bucketName string) *batchv1.Jo
 									Name:  "FILENAME",
 									Value: name,
 								},
+                                                                {
+                                                                        Name: "POST_HOOK",
+                                                                        Value: "1",
+                                                                },
 							},
 							EnvFrom: []v1.EnvFromSource{{
 								SecretRef: &v1.SecretEnvSource{

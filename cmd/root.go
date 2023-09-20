@@ -39,9 +39,21 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	Run: func(cmd *cobra.Command, args []string) {
-		app.Run()
-	},
+	//Run: func(cmd *cobra.Command, args []string) {
+	//},
+}
+
+var discordbotCmd = &cobra.Command{
+        Use: "discord",
+        Run: func(cmd *cobra.Command, args []string) {
+                app.DiscordBot()
+        },
+}
+var webCmd = &cobra.Command{
+        Use: "web",
+        Run: func(cmd *cobra.Command, args []string) {
+                app.Web()
+        },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -56,19 +68,14 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.ps-bot-2.yaml)")
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+        rootCmd.AddCommand(discordbotCmd, webCmd)
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)

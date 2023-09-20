@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+        <head>
+                <title></title>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+                <script src="js/app.js" type="text/javascript"></script>
+                <script>
+                  function button(val, s) {
+                    return h('div', {'class': 'col-6 mb-1 col-md-3'}, [h('button', {'class': 'btn btn-primary d-block btn-lg w-100', "@click": () => playSound(val, s)}, [s])])
+                  }
+                </script>
+ 
+                <style>
+                        .btn {
+                                text-transform: initial !important;
+                        }
+                </style>
+
+        </head>
+        <body>
+
+                <div class="container">
+                        <div class="row mb-4">
+                                <div class="col-12">
+                <h1>Ps-Bot</h1>
+                <select id="guild-selector" class="form-select">
+                        <option value="" disabled>Select a guild</option>
+                        
+                </select>
+                                </div>
+                        </div>
+                <div id="sounds" class="row">
+                        
+                </div>
+
+                </div>
+        
+        </body>
+</html>

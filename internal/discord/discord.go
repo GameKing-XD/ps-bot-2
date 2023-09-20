@@ -6,6 +6,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/tvanriel/ps-bot-2/internal/commands"
 	"github.com/tvanriel/ps-bot-2/internal/player"
+	"github.com/tvanriel/ps-bot-2/internal/queues"
 	"github.com/tvanriel/ps-bot-2/internal/repositories"
 	"go.uber.org/zap"
 )
@@ -17,9 +18,10 @@ type DiscordBot struct {
 	repo   *repositories.GuildRepository
 	player *player.Player
 	exe    *commands.Executor
+        queue  *queues.MessageQueue
 }
 
-func NewDiscord(config *Configuration, log *zap.Logger, repo *repositories.GuildRepository, exe *commands.Executor, p *player.Player) (*DiscordBot, error) {
+func NewDiscord(config *Configuration, log *zap.Logger, repo *repositories.GuildRepository, exe *commands.Executor, p *player.Player, queue *queues.MessageQueue) (*DiscordBot, error) {
 	ses, err := discordgo.New("Bot " + config.BotToken)
 
 	if err != nil {
@@ -34,6 +36,7 @@ func NewDiscord(config *Configuration, log *zap.Logger, repo *repositories.Guild
 		log:    log,
 		exe:    exe,
 		player: p,
+                queue:  queue,
 	}, nil
 }
 
@@ -43,6 +46,41 @@ func (d *DiscordBot) AddHandlers() error {
 	d.conn.AddHandler(guildCreate(d))
 	return nil
 }
+
+func (d *DiscordBot) ListenQueuedMessages() error {
+        msgs, err := d.queue.Consume()
+        if err != nil {
+                return err
+        }
+        go func ()  {
+                
+                for m := range msgs {
+                        d.log.Info("Send message from AMQP chan", 
+                                zap.String("channel", m.ChannelID), 
+                                zap.String("content", m.Content),
+                        )
+
+                        if m.ChannelID == "" || m.Content == "" {
+                                d.log.Error("Invalid message request from AMQP chan",
+                                        zap.String("channel", m.ChannelID),
+                                        zap.String("content", m.Content),
+                                )
+                                return
+                        }
+                        _, err := d.conn.ChannelMessageSend(m.ChannelID, m.Content)
+                        if err != nil {
+                                d.log.Error("error while listening to queued messages", 
+                                        zap.Error(err),
+                                        zap.String("channel", m.ChannelID),
+                                        zap.String("content", m.Content),
+                                )
+                        }
+
+                }
+        }()
+        return nil
+}
+
 func (d *DiscordBot) Connect() error {
 	return d.conn.Open()
 }

@@ -15,6 +15,11 @@ func NewJoinCommand(repo *repositories.GuildRepository) *JoinCommand {
 func (j *JoinCommand) Name() string {
 	return "join"
 }
+
+func (j *JoinCommand) SkipsPrefix() bool {
+	return false
+}
+
 func (j *JoinCommand) Apply(ctx *Context) error {
 	state, err := ctx.Session.State.VoiceState(ctx.Message.GuildID, ctx.Message.Author.ID)
 	if err != nil {

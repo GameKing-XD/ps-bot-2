@@ -17,6 +17,10 @@ func (s *SetPrefixCommand) Name() string {
 	return "setprefix"
 }
 
+func (s *SetPrefixCommand) SkipsPrefix() bool {
+	return false
+}
+
 func (s *SetPrefixCommand) Apply(ctx *Context) error {
 	if len(ctx.Args) < 1 {
 		return nil

@@ -6,7 +6,7 @@ WORKDIR /go/src/github.com/mitaka8/encode
 RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /tmp/dca .
 
 FROM alpine:latest
-RUN apk add --no-cache ffmpeg minio-client curl
+RUN apk add --no-cache ffmpeg minio-client rabbitmq-c-utils curl jq
 COPY --from=builder /tmp/dca /usr/local/bin/dca
 ADD encode.sh /usr/local/bin/encode.sh
 

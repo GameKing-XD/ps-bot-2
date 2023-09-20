@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
+	"github.com/tvanriel/cloudsdk/amqp"
+	"github.com/tvanriel/cloudsdk/http"
 	"github.com/tvanriel/cloudsdk/kubernetes"
 	"github.com/tvanriel/cloudsdk/logging"
 	"github.com/tvanriel/cloudsdk/mysql"
@@ -21,6 +23,8 @@ type Configuration struct {
 	Storage    soundstore.Configuration    `mapstructure:"storage"`
 	Kubernetes kubernetes.Configuration    `mapstructure:"kubernetes"`
 	Saver      commands.SaverConfiguration `mapstructure:"saver"`
+	Http       http.Configuration          `mapstructure:"http"`
+	Amqp       amqp.Configuration          `mapstructure:"amqp"`
 }
 
 func ViperConfiguration() (Configuration, error) {
@@ -69,4 +73,12 @@ func KubernetesConfiguration(config Configuration) *kubernetes.Configuration {
 }
 func SaverConfiguration(config Configuration) *commands.SaverConfiguration {
 	return &config.Saver
+}
+
+func HttpConfiguration(config Configuration) http.Configuration {
+	return config.Http
+}
+
+func AmqpConfiguration(config Configuration) amqp.Configuration {
+	return config.Amqp
 }

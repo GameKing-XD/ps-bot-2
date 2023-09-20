@@ -2,7 +2,6 @@ package discord
 
 import (
 	"go.uber.org/fx"
-	"go.uber.org/multierr"
 )
 
 var Module = fx.Module("bot",
@@ -10,11 +9,19 @@ var Module = fx.Module("bot",
 		NewDiscord,
 	),
 	fx.Invoke(
-		func(d *DiscordBot) error {
-			return multierr.Combine(
-				d.Connect(),
-				d.AddHandlers(),
-			)
-		},
+		ConnectDiscord,
+		AddHandlers,
+                ListenQueuedMessages,
 	),
 )
+
+func ConnectDiscord(d *DiscordBot) error {
+	return d.Connect()
+}
+
+func AddHandlers(d *DiscordBot) error {
+	return d.AddHandlers()
+}
+func ListenQueuedMessages(d *DiscordBot) error {
+        return d.ListenQueuedMessages()
+}

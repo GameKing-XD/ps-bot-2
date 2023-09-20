@@ -11,6 +11,7 @@ import (
 type Command interface {
 	Name() string
 	Apply(*Context) error
+	SkipsPrefix() bool
 }
 
 type Context struct {
@@ -35,6 +36,22 @@ func (ctx *Context) Reply(s string) (*discordgo.Message, error) {
 		ctx.Reference(),
 	)
 
+}
+
+func (ctx *Context) Error(err error) (*discordgo.Message, error) {
+	return ctx.Session.ChannelMessageSendEmbedReply(
+		ctx.Message.ChannelID,
+		&discordgo.MessageEmbed{
+			Fields: []*discordgo.MessageEmbedField{
+				{
+					Name:  "Error",
+					Value: err.Error(),
+				},
+			},
+			Color: 0xFF0000,
+		},
+		ctx.Reference(),
+	)
 }
 
 func (ctx *Context) Reference() *discordgo.MessageReference {

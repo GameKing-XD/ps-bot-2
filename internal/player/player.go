@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/tvanriel/ps-bot-2/internal/queues"
 	"github.com/tvanriel/ps-bot-2/internal/repositories"
 	"github.com/tvanriel/ps-bot-2/internal/soundstore"
 	"go.uber.org/zap"
@@ -12,15 +13,15 @@ import (
 var ErrNoSuchConnection = errors.New("no connection to guild voice channel")
 
 type Player struct {
-	Queues map[string](chan string)
+        queue  *queues.SoundsQueue
 	log    *zap.Logger
 	repo   *repositories.GuildRepository
 	store  *soundstore.SoundStore
 }
 
-func NewPlayer(log *zap.Logger, repo *repositories.GuildRepository, store *soundstore.SoundStore) *Player {
+func NewPlayer(log *zap.Logger, repo *repositories.GuildRepository, store *soundstore.SoundStore, queue *queues.SoundsQueue) *Player {
 	return &Player{
-		Queues: make(map[string]chan string),
+                queue:  queue,
 		log:    log,
 		repo:   repo,
 		store:  store,
@@ -29,17 +30,32 @@ func NewPlayer(log *zap.Logger, repo *repositories.GuildRepository, store *sound
 
 func (p *Player) Connect(ses *discordgo.Session, guildId string) error {
 
-	p.Queues[guildId] = make(chan string, 50)
-
 	conn, err := p.attemptConnect(ses, guildId)
 	if err != nil {
 		return err
 	}
+	p.log.Info("Connected to voicechannel", zap.String("guild", guildId))
 
+        msgs, err := p.queue.Consume(guildId)
+
+        if err != nil {
+                return err
+        }
 	go func() {
-		for s := range p.Queues[guildId] {
+                
+                for m := range msgs {
+                        s := m.Sound
+			p.log.Info("playing sound", 
+                                zap.String("sound", s), 
+                                zap.String("guildId", guildId),
+                        )
+
 			reader, err := p.store.Find(guildId, s)
 			if err != nil {
+                                p.log.Warn("Could not play sound, store does not contain sound",
+                                        zap.String("sound", s), 
+                                        zap.String("guildId", guildId),
+                                )
 				continue
 			}
 			buf, err := loadSound(reader)
@@ -60,10 +76,6 @@ func (p *Player) Connect(ses *discordgo.Session, guildId string) error {
 	}()
 
 	return nil
-}
-
-func (p *Player) Queue(guildId string, soundName string) {
-	p.Queues[guildId] <- soundName
 }
 
 func (p *Player) attemptConnect(ses *discordgo.Session, guildId string) (*discordgo.VoiceConnection, error) {
