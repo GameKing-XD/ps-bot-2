@@ -11,9 +11,9 @@ var Module = fx.Module("commands",
 		AsCommand(NewJoinCommand),
 		AsCommand(NewPSCommand),
 		AsCommand(NewSaveCommand),
-                AsCommand(NewBijnaWeekendCommand),
-                AsCommand(NewFuehrerWeekend),
-                AsCommand(NewMonkeyWeekend),
+		AsCommand(NewBijnaWeekendCommand),
+		AsCommand(NewFuehrerWeekend),
+		AsCommand(NewMonkeyWeekend),
 
 		fx.Annotate(
 			NewCommandExecutor,

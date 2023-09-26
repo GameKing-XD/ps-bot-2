@@ -13,18 +13,18 @@ import (
 var ErrNoSuchConnection = errors.New("no connection to guild voice channel")
 
 type Player struct {
-        queue  *queues.SoundsQueue
-	log    *zap.Logger
-	repo   *repositories.GuildRepository
-	store  *soundstore.SoundStore
+	queue *queues.SoundsQueue
+	log   *zap.Logger
+	repo  *repositories.GuildRepository
+	store *soundstore.SoundStore
 }
 
 func NewPlayer(log *zap.Logger, repo *repositories.GuildRepository, store *soundstore.SoundStore, queue *queues.SoundsQueue) *Player {
 	return &Player{
-                queue:  queue,
-		log:    log,
-		repo:   repo,
-		store:  store,
+		queue: queue,
+		log:   log,
+		repo:  repo,
+		store: store,
 	}
 }
 
@@ -36,26 +36,26 @@ func (p *Player) Connect(ses *discordgo.Session, guildId string) error {
 	}
 	p.log.Info("Connected to voicechannel", zap.String("guild", guildId))
 
-        msgs, err := p.queue.Consume(guildId)
+	msgs, err := p.queue.Consume(guildId)
 
-        if err != nil {
-                return err
-        }
+	if err != nil {
+		return err
+	}
 	go func() {
-                
-                for m := range msgs {
-                        s := m.Sound
-			p.log.Info("playing sound", 
-                                zap.String("sound", s), 
-                                zap.String("guildId", guildId),
-                        )
+
+		for m := range msgs {
+			s := m.Sound
+			p.log.Info("playing sound",
+				zap.String("sound", s),
+				zap.String("guildId", guildId),
+			)
 
 			reader, err := p.store.Find(guildId, s)
 			if err != nil {
-                                p.log.Warn("Could not play sound, store does not contain sound",
-                                        zap.String("sound", s), 
-                                        zap.String("guildId", guildId),
-                                )
+				p.log.Warn("Could not play sound, store does not contain sound",
+					zap.String("sound", s),
+					zap.String("guildId", guildId),
+				)
 				continue
 			}
 			buf, err := loadSound(reader)

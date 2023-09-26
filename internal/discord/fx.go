@@ -11,7 +11,7 @@ var Module = fx.Module("bot",
 	fx.Invoke(
 		ConnectDiscord,
 		AddHandlers,
-                ListenQueuedMessages,
+		ListenQueuedMessages,
 	),
 )
 
@@ -23,5 +23,5 @@ func AddHandlers(d *DiscordBot) error {
 	return d.AddHandlers()
 }
 func ListenQueuedMessages(d *DiscordBot) error {
-        return d.ListenQueuedMessages()
+	return d.ListenQueuedMessages()
 }

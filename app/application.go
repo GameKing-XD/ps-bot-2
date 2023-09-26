@@ -20,7 +20,6 @@ import (
 	"go.uber.org/zap"
 )
 
-
 func DiscordBot() {
 	fx.New(
 		fx.Provide(
@@ -47,36 +46,34 @@ func DiscordBot() {
 		s3.Module,
 		kubernetes.Module,
 		amqp.Module,
-                queues.Module,
-                fx.Invoke(func(_ *discord.DiscordBot) {}),
+		queues.Module,
+		fx.Invoke(func(_ *discord.DiscordBot) {}),
 	).Run()
 }
 
-
 func Web() {
-        fx.New(
-                fx.Provide(
-                        config.ViperConfiguration,
-                        config.MySQLConfiguration,
-                        config.HttpConfiguration,
-                        config.AmqpConfiguration,
-                        config.LoggingConfiguration,
-                        config.S3Configuration,
-                        config.StorageConfiguration,
-                ),
+	fx.New(
+		fx.Provide(
+			config.ViperConfiguration,
+			config.MySQLConfiguration,
+			config.HttpConfiguration,
+			config.AmqpConfiguration,
+			config.LoggingConfiguration,
+			config.S3Configuration,
+			config.StorageConfiguration,
+		),
 		fx.WithLogger(func(l *zap.Logger) fxevent.Logger {
 			return &fxevent.ZapLogger{Logger: l}
 		}),
-                mysql.Module,
-                http.Module,
-                web.Module,
-                amqp.Module,
-                logging.Module,
-                repositories.Module,
-                soundstore.Module,
-                queues.Module,
-                s3.Module,
-                
-
-        ).Run()
+		mysql.Module,
+		http.Module,
+		web.Module,
+		amqp.Module,
+		logging.Module,
+		repositories.Module,
+		soundstore.Module,
+		queues.Module,
+		s3.Module,
+                fx.Invoke(http.Listen),
+	).Run()
 }

@@ -2,6 +2,7 @@ package discord
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/tvanriel/ps-bot-2/internal/commands"
@@ -18,7 +19,7 @@ type DiscordBot struct {
 	repo   *repositories.GuildRepository
 	player *player.Player
 	exe    *commands.Executor
-        queue  *queues.MessageQueue
+	queue  *queues.MessageQueue
 }
 
 func NewDiscord(config *Configuration, log *zap.Logger, repo *repositories.GuildRepository, exe *commands.Executor, p *player.Player, queue *queues.MessageQueue) (*DiscordBot, error) {
@@ -36,7 +37,7 @@ func NewDiscord(config *Configuration, log *zap.Logger, repo *repositories.Guild
 		log:    log,
 		exe:    exe,
 		player: p,
-                queue:  queue,
+		queue:  queue,
 	}, nil
 }
 
@@ -48,37 +49,40 @@ func (d *DiscordBot) AddHandlers() error {
 }
 
 func (d *DiscordBot) ListenQueuedMessages() error {
-        msgs, err := d.queue.Consume()
-        if err != nil {
-                return err
-        }
-        go func ()  {
-                
-                for m := range msgs {
-                        d.log.Info("Send message from AMQP chan", 
-                                zap.String("channel", m.ChannelID), 
-                                zap.String("content", m.Content),
-                        )
+	msgs, err := d.queue.Consume()
+	if err != nil {
+		return err
+	}
+	go func() {
 
-                        if m.ChannelID == "" || m.Content == "" {
-                                d.log.Error("Invalid message request from AMQP chan",
-                                        zap.String("channel", m.ChannelID),
-                                        zap.String("content", m.Content),
-                                )
-                                return
-                        }
-                        _, err := d.conn.ChannelMessageSend(m.ChannelID, m.Content)
-                        if err != nil {
-                                d.log.Error("error while listening to queued messages", 
-                                        zap.Error(err),
-                                        zap.String("channel", m.ChannelID),
-                                        zap.String("content", m.Content),
-                                )
-                        }
+		for m := range msgs {
+			d.log.Info("Send message from AMQP chan",
+				zap.String("channel", m.ChannelID),
+				zap.String("content", m.Content),
+			)
 
-                }
-        }()
-        return nil
+			if m.ChannelID == "" || m.Content == "" {
+				d.log.Error("Invalid message request from AMQP chan",
+					zap.String("channel", m.ChannelID),
+					zap.String("content", m.Content),
+				)
+				return
+			}
+
+                        content := escapeDiscordMessage(m.Content)
+
+			_, err := d.conn.ChannelMessageSend(m.ChannelID, content)
+			if err != nil {
+				d.log.Error("error while listening to queued messages",
+					zap.Error(err),
+					zap.String("channel", m.ChannelID),
+					zap.String("content", m.Content),
+				)
+			}
+
+		}
+	}()
+	return nil
 }
 
 func (d *DiscordBot) Connect() error {
@@ -92,4 +96,10 @@ func (d *DiscordBot) JoinVoiceChannels() {
 func (d *DiscordBot) PlayVoiceCommand(s *discordgo.Session, sound string, guildId string) {
 	fmt.Println(sound, guildId)
 
+}
+func escapeDiscordMessage(s string) string {
+        s = strings.ReplaceAll(s, "@", "")
+        s = strings.ReplaceAll(s, "#", "")
+
+        return s
 }

@@ -6,14 +6,14 @@ import (
 )
 
 type PSCommand struct {
-	repo   *repositories.GuildRepository
-        queue *queues.SoundsQueue
+	repo  *repositories.GuildRepository
+	queue *queues.SoundsQueue
 }
 
 func NewPSCommand(repo *repositories.GuildRepository, queue *queues.SoundsQueue) *PSCommand {
 	return &PSCommand{
-                queue: queue,
-		repo:   repo,
+		queue: queue,
+		repo:  repo,
 	}
 }
 
@@ -30,10 +30,10 @@ func (ps *PSCommand) Apply(ctx *Context) error {
 		return nil
 	}
 
-        err := ps.queue.Append(ctx.Message.GuildID, ctx.Args[0])
-        if err != nil {
-                return err
-        }
+	err := ps.queue.Append(ctx.Message.GuildID, ctx.Args[0])
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

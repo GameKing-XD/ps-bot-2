@@ -1,7 +1,6 @@
 package web
 
 import (
-
 	"github.com/labstack/echo/v4"
 	"github.com/tvanriel/ps-bot-2/internal/queues"
 	"github.com/tvanriel/ps-bot-2/internal/repositories"
@@ -11,7 +10,7 @@ import (
 type Web struct {
 	repo  *repositories.GuildRepository
 	store *soundstore.SoundStore
-        queue *queues.SoundsQueue
+	queue *queues.SoundsQueue
 }
 
 func NewWeb(repo *repositories.GuildRepository, queue *queues.SoundsQueue, store *soundstore.SoundStore) (*Web, error) {
@@ -64,7 +63,7 @@ func (w *Web) Handler(e *echo.Group) {
 			return c.JSON(422, err)
 		}
 
-                err := w.queue.Append(body.Guild, body.Sound)
+		err := w.queue.Append(body.Guild, body.Sound)
 
 		if err != nil {
 			return c.JSON(500, err)

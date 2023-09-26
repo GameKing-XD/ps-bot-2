@@ -44,8 +44,8 @@ mcli cp /tmp/output.dca target/$TARGET/$FILENAME.dca
 
 
 if [ ! -z "$POST_HOOK" ]; then
-        if [ -z "$AMQP_URL" ]; then
-                echo "AMQP_URL env var is empty"
+        if [ -z "$AMQP_SERVER" ]; then
+                echo "AMQP_SERVER env var is empty"
                 exit 1
         fi
 
@@ -59,10 +59,6 @@ if [ ! -z "$POST_HOOK" ]; then
                 exit 1
         fi
 
-        if [ -z "$AMQP_URL" ]; then 
-                echo "AMQP_URL env var is empty"
-                exit 1
-        fi       
         if [ -z "$AMQP_CHAN" ]; then
                 echo "AMQP_CHAN env var is empty"
                 exit 1
@@ -72,9 +68,6 @@ if [ ! -z "$POST_HOOK" ]; then
                 exit 1
         fi
 
-        if [ -z "$AMQP_EXCHANGE" ]; then
-                AMQP_EXCHANGE="amq.default"
-        fi
         if [ -z "$AMQP_CONTENT_TYPE" ];then
                 AMQP_CONTENT_TYPE="application/json"
         fi
@@ -83,7 +76,7 @@ if [ ! -z "$POST_HOOK" ]; then
         amqp-publish \
                 --username "$AMQP_USER" \
                 --password "$AMQP_PASS" \
-                -u "$AMQP_URL" \
+                -s "$AMQP_SERVER" \
                 -b "$AMQP_BODY" \
                 -r "$AMQP_CHAN" \
                 -e "$AMQP_EXCHANGE"

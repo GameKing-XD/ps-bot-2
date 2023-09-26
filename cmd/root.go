@@ -44,16 +44,16 @@ to quickly create a Cobra application.`,
 }
 
 var discordbotCmd = &cobra.Command{
-        Use: "discord",
-        Run: func(cmd *cobra.Command, args []string) {
-                app.DiscordBot()
-        },
+	Use: "discord",
+	Run: func(cmd *cobra.Command, args []string) {
+		app.DiscordBot()
+	},
 }
 var webCmd = &cobra.Command{
-        Use: "web",
-        Run: func(cmd *cobra.Command, args []string) {
-                app.Web()
-        },
+	Use: "web",
+	Run: func(cmd *cobra.Command, args []string) {
+		app.Web()
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -70,7 +70,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.ps-bot-2.yaml)")
 
-        rootCmd.AddCommand(discordbotCmd, webCmd)
+	rootCmd.AddCommand(discordbotCmd, webCmd)
 }
 
 // initConfig reads in config file and ENV variables if set.
