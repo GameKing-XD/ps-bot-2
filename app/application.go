@@ -74,6 +74,6 @@ func Web() {
 		soundstore.Module,
 		queues.Module,
 		s3.Module,
-                fx.Invoke(http.Listen),
+		fx.Invoke(http.Listen),
 	).Run()
 }

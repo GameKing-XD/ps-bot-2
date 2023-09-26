@@ -64,32 +64,38 @@ func (s *SaveCommand) Apply(ctx *Context) error {
 		zap.String("soundName", soundName),
 	)
 
-        amqpBody, err := json.Marshal(queues.QueuedMessage{
-                ChannelID: ctx.Message.ChannelID,
-                Content: strings.Join([]string{
-                        "Saved sound ",
-                        soundName,
-                        ".",
-                }, ""),
-        })
-        if err != nil {
-                return err
-        }
+	amqpBody, err := json.Marshal(queues.QueuedMessage{
+		ChannelID: ctx.Message.ChannelID,
+		Content: strings.Join([]string{
+			"Saved sound ",
+			soundName,
+			".",
+		}, ""),
+	})
+	if err != nil {
+		return err
+	}
 
 	return s.kubernetes.RunJob(convertJob(url, guildId, soundName, s.secretName, s.bucketName, string(amqpBody)))
 }
 
 func convertJob(url, namespace, name, secretName, bucketName, amqpBody string) *batchv1.Job {
 
-        id := randstr.Concat(
-                randstr.Randstr(randstr.Lowercase, 1),
-                randstr.Randstr(randstr.Lowercase + randstr.Numbers, 5),
-                )
-        
+	id := randstr.Concat(
+		randstr.Randstr(randstr.Lowercase, 1),
+		randstr.Randstr(randstr.Lowercase+randstr.Numbers, 5),
+	)
 
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "ps-bot-download-" + namespace + id,
+			Labels: map[string]string{
+				"app.kubernetes.io/part-of":   "ps-bot",
+				"app.kubernetes.io/name":      "ps-bot",
+				"app.kubernetes.io/component": "downloader",
+				"app.kubernetes.io/instance":  "downloader",
+				"app.kubernetes.io/version":   "latest",
+			},
 		},
 		Spec: batchv1.JobSpec{
 			Template: v1.PodTemplateSpec{
@@ -115,10 +121,10 @@ func convertJob(url, namespace, name, secretName, bucketName, amqpBody string) *
 									Name:  "POST_HOOK",
 									Value: "1",
 								},
-                                                                {
-                                                                        Name: "AMQP_BODY",
-                                                                        Value: amqpBody,
-                                                                },
+								{
+									Name:  "AMQP_BODY",
+									Value: amqpBody,
+								},
 							},
 							EnvFrom: []v1.EnvFromSource{{
 								SecretRef: &v1.SecretEnvSource{

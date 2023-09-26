@@ -5,20 +5,32 @@ import (
 	"github.com/tvanriel/ps-bot-2/internal/queues"
 	"github.com/tvanriel/ps-bot-2/internal/repositories"
 	"github.com/tvanriel/ps-bot-2/internal/soundstore"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type Web struct {
-	repo  *repositories.GuildRepository
-	store *soundstore.SoundStore
-	queue *queues.SoundsQueue
+	Repo  *repositories.GuildRepository
+	Queue *queues.SoundsQueue
+	Store *soundstore.SoundStore
+	Log   *zap.Logger
 }
 
-func NewWeb(repo *repositories.GuildRepository, queue *queues.SoundsQueue, store *soundstore.SoundStore) (*Web, error) {
+type NewWebQueueParams struct {
+	fx.In
+	Repo  *repositories.GuildRepository
+	Queue *queues.SoundsQueue
+	Store *soundstore.SoundStore
+	Log   *zap.Logger
+}
+
+func NewWeb(p NewWebQueueParams) (*Web, error) {
 
 	return &Web{
-		repo:  repo,
-		queue: queue,
-		store: store,
+		Repo:  p.Repo,
+		Queue: p.Queue,
+		Store: p.Store,
+		Log:   p.Log.Named("web"),
 	}, nil
 }
 
@@ -43,7 +55,7 @@ func (w *Web) Handler(e *echo.Group) {
 	e.Static("app", "web/assets")
 
 	e.GET("api/guilds", func(c echo.Context) error {
-		m := w.repo.GetGuilds()
+		m := w.Repo.GetGuilds()
 		return c.JSON(200, m)
 	})
 
@@ -52,7 +64,7 @@ func (w *Web) Handler(e *echo.Group) {
 		if id == "" {
 			return c.JSON(422, map[string]string{"message": "path param id is required"})
 		}
-		s := w.store.List(id)
+		s := w.Store.List(id)
 		return c.JSON(200, s)
 	})
 
@@ -63,7 +75,10 @@ func (w *Web) Handler(e *echo.Group) {
 			return c.JSON(422, err)
 		}
 
-		err := w.queue.Append(body.Guild, body.Sound)
+		err := w.Queue.Append(
+			body.Guild,
+			body.Sound,
+		)
 
 		if err != nil {
 			return c.JSON(500, err)

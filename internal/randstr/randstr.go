@@ -1,4 +1,5 @@
 package randstr
+
 import (
 	"math/rand"
 	"strings"

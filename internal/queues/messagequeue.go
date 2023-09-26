@@ -3,25 +3,28 @@ package queues
 import (
 	"encoding/json"
 
-	"github.com/rabbitmq/amqp091-go"
+	"github.com/tvanriel/cloudsdk/amqp"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 type MessageQueue struct {
-	Ch  *amqp091.Channel
-	log *zap.Logger
+	Amqp *amqp.Connection
+	Log  *zap.Logger
 }
 
-func NewMessageQueue(amqp *amqp091.Connection, l *zap.Logger) (*MessageQueue, error) {
-	ch, err := amqp.Channel()
-	if err != nil {
-		return nil, err
-	}
+type NewMessageQueueParams struct {
+	fx.In
 
+	Amqp *amqp.Connection
+	Log  *zap.Logger
+}
+
+func NewMessageQueue(p NewMessageQueueParams) *MessageQueue {
 	return &MessageQueue{
-		Ch:  ch,
-		log: l,
-	}, nil
+		Amqp: p.Amqp,
+		Log:  p.Log.Named("messagequeue"),
+	}
 
 }
 
@@ -31,34 +34,36 @@ type QueuedMessage struct {
 	Content   string `json:"content"`
 }
 
-func (m *MessageQueue) Append() {
-
-}
-
 func (m *MessageQueue) Consume() (chan QueuedMessage, error) {
 
 	out := make(chan QueuedMessage)
-	_, err := m.Ch.QueueDeclare("messages", false, false, false, true, nil)
+	ch, err := m.Amqp.Channel()
 	if err != nil {
 		return nil, err
 	}
-	msgs, err := m.Ch.Consume("messages", "", true, false, false, true, nil)
 
-	if err == nil {
-		go func() {
-			for x := range msgs {
-				m.log.Info("Recv on AMQP Messages queue", zap.String("body", string(x.Body)))
-				message := QueuedMessage{}
-				err := json.Unmarshal(x.Body, &message)
-				if err != nil {
-					m.log.Error("cannot unmarshal message from messagequeue", zap.Error(err))
-					continue
-				}
-				out <- message
-
-			}
-		}()
+	ch.QueueDeclare("messages", false, false, false, true, nil)
+	if err != nil {
+		return nil, err
 	}
-	return out, err
+	msgs, err := ch.Consume("messages", "", true, false, false, true, nil)
 
+	if err != nil {
+		return out, err
+	}
+	go func() {
+		for x := range msgs {
+			m.Log.Info("Recv on AMQP Messages queue", zap.String("body", string(x.Body)))
+			message := QueuedMessage{}
+			err := json.Unmarshal(x.Body, &message)
+			if err != nil {
+				m.Log.Error("cannot unmarshal message from messagequeue", zap.Error(err))
+				continue
+			}
+			out <- message
+
+		}
+	}()
+
+	return out, nil
 }

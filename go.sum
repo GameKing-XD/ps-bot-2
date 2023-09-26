@@ -352,6 +352,8 @@ github.com/tvanriel/cloudsdk v0.0.0-20230919083107-f988581e7702 h1:L1gL/c8D0tuPX
 github.com/tvanriel/cloudsdk v0.0.0-20230919083107-f988581e7702/go.mod h1:jrZcEnwAmqwSiea4/8Vtp4iR1Wqixpoe4fa9HFoZB6Q=
 github.com/tvanriel/cloudsdk v0.1.0 h1:IVEZWEveSnO6SpYmmkS/n9+zudKTcwsX2T2Q8TN5Gt4=
 github.com/tvanriel/cloudsdk v0.1.0/go.mod h1:jrZcEnwAmqwSiea4/8Vtp4iR1Wqixpoe4fa9HFoZB6Q=
+github.com/tvanriel/cloudsdk v0.2.0 h1:L1uz2kvlI7UeeZ/m5ttjTCC7Oj41HxIoSaQi1XVgBGk=
+github.com/tvanriel/cloudsdk v0.2.0/go.mod h1:jrZcEnwAmqwSiea4/8Vtp4iR1Wqixpoe4fa9HFoZB6Q=
 github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasttemplate v1.0.1/go.mod h1:UQGH1tvbgY+Nz5t2n7tXsz52dQxojPUpymEIMZ47gx8=

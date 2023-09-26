@@ -9,21 +9,34 @@ import (
 	"github.com/tvanriel/ps-bot-2/internal/player"
 	"github.com/tvanriel/ps-bot-2/internal/queues"
 	"github.com/tvanriel/ps-bot-2/internal/repositories"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 type DiscordBot struct {
-	conn   *discordgo.Session
-	log    *zap.Logger
-	ready  bool
-	repo   *repositories.GuildRepository
-	player *player.Player
-	exe    *commands.Executor
-	queue  *queues.MessageQueue
+	Ready  bool
+	Conn   *discordgo.Session
+	Log    *zap.Logger
+	Repo   *repositories.GuildRepository
+	Player *player.Player
+	Exe    *commands.Executor
+	Queue  *queues.MessageQueue
 }
 
-func NewDiscord(config *Configuration, log *zap.Logger, repo *repositories.GuildRepository, exe *commands.Executor, p *player.Player, queue *queues.MessageQueue) (*DiscordBot, error) {
-	ses, err := discordgo.New("Bot " + config.BotToken)
+type NewDiscordParams struct {
+	fx.In
+
+	Config *Configuration
+	Conn   *discordgo.Session
+	Log    *zap.Logger
+	Repo   *repositories.GuildRepository
+	Player *player.Player
+	Exe    *commands.Executor
+	Queue  *queues.MessageQueue
+}
+
+func NewDiscord(p NewDiscordParams) (*DiscordBot, error) {
+	ses, err := discordgo.New("Bot " + p.Config.BotToken)
 
 	if err != nil {
 		return nil, err
@@ -31,49 +44,49 @@ func NewDiscord(config *Configuration, log *zap.Logger, repo *repositories.Guild
 	ses.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAllWithoutPrivileged)
 
 	return &DiscordBot{
-		conn:   ses,
-		repo:   repo,
-		ready:  false,
-		log:    log,
-		exe:    exe,
-		player: p,
-		queue:  queue,
+		Conn:   ses,
+		Repo:   p.Repo,
+		Ready:  false,
+		Log:    p.Log.Named("discord"),
+		Exe:    p.Exe,
+		Player: p.Player,
+		Queue:  p.Queue,
 	}, nil
 }
 
 func (d *DiscordBot) AddHandlers() error {
-	d.conn.AddHandler(messagehandler(d))
-	d.conn.AddHandler(ready(d))
-	d.conn.AddHandler(guildCreate(d))
+	d.Conn.AddHandler(messagehandler(d))
+	d.Conn.AddHandler(ready(d))
+	d.Conn.AddHandler(guildCreate(d))
 	return nil
 }
 
 func (d *DiscordBot) ListenQueuedMessages() error {
-	msgs, err := d.queue.Consume()
+	msgs, err := d.Queue.Consume()
 	if err != nil {
 		return err
 	}
 	go func() {
 
 		for m := range msgs {
-			d.log.Info("Send message from AMQP chan",
+			d.Log.Info("Send message from AMQP chan",
 				zap.String("channel", m.ChannelID),
 				zap.String("content", m.Content),
 			)
 
 			if m.ChannelID == "" || m.Content == "" {
-				d.log.Error("Invalid message request from AMQP chan",
+				d.Log.Error("Invalid message request from AMQP chan",
 					zap.String("channel", m.ChannelID),
 					zap.String("content", m.Content),
 				)
 				return
 			}
 
-                        content := escapeDiscordMessage(m.Content)
+			content := escapeDiscordMessage(m.Content)
 
-			_, err := d.conn.ChannelMessageSend(m.ChannelID, content)
+			_, err := d.Conn.ChannelMessageSend(m.ChannelID, content)
 			if err != nil {
-				d.log.Error("error while listening to queued messages",
+				d.Log.Error("error while listening to queued messages",
 					zap.Error(err),
 					zap.String("channel", m.ChannelID),
 					zap.String("content", m.Content),
@@ -86,11 +99,11 @@ func (d *DiscordBot) ListenQueuedMessages() error {
 }
 
 func (d *DiscordBot) Connect() error {
-	return d.conn.Open()
+	return d.Conn.Open()
 }
 
 func (d *DiscordBot) JoinVoiceChannels() {
-	d.repo.GetVoiceChannels()
+	d.Repo.GetVoiceChannels()
 }
 
 func (d *DiscordBot) PlayVoiceCommand(s *discordgo.Session, sound string, guildId string) {
@@ -98,8 +111,8 @@ func (d *DiscordBot) PlayVoiceCommand(s *discordgo.Session, sound string, guildI
 
 }
 func escapeDiscordMessage(s string) string {
-        s = strings.ReplaceAll(s, "@", "")
-        s = strings.ReplaceAll(s, "#", "")
+	s = strings.ReplaceAll(s, "@", "")
+	s = strings.ReplaceAll(s, "#", "")
 
-        return s
+	return s
 }

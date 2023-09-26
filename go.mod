@@ -12,7 +12,7 @@ require (
 	github.com/rabbitmq/amqp091-go v1.8.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
-	github.com/tvanriel/cloudsdk v0.1.0
+	github.com/tvanriel/cloudsdk v0.2.0
 	go.uber.org/fx v1.20.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.26.0
