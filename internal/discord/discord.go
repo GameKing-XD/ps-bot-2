@@ -27,7 +27,6 @@ type NewDiscordParams struct {
 	fx.In
 
 	Config *Configuration
-	Conn   *discordgo.Session
 	Log    *zap.Logger
 	Repo   *repositories.GuildRepository
 	Player *player.Player

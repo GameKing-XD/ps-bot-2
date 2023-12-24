@@ -1,3 +1,4 @@
 config.yaml
 .git
-encoder/
+encoder
+web/src/
