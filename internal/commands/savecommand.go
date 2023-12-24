@@ -14,21 +14,21 @@ import (
 )
 
 var kerstterms = []string{
-        "kerst",
-        "christmas",
-        "christ",
-} 
+	"kerst",
+	"christmas",
+	"christ",
+}
 
 func kerstbtfo(banned []string) func(s string) bool {
 
-        return func(s string) bool {
-                for _, word := range banned {
-                        if s == word {
-                                return true
-                        }
-                }
-                return false
-        }
+	return func(s string) bool {
+		for _, word := range banned {
+			if s == word {
+				return true
+			}
+		}
+		return false
+	}
 }
 
 type SaverConfiguration struct {
@@ -65,7 +65,7 @@ func (s *SaveCommand) Apply(ctx *Context) error {
 	if len(ctx.Args) < 1 {
 		ctx.Reply("Usage: save <name> - Saves the attachment as a ps command")
 		return nil
-        }
+	}
 
 	if len(ctx.Message.Attachments) != 1 {
 		ctx.Reply("You must provide an attachment")
@@ -104,8 +104,8 @@ func convertJob(url, namespace, name, secretName, bucketName, amqpBody string) *
 		randstr.Randstr(randstr.Lowercase+randstr.Numbers, 5),
 	)
 
-        backoffLimit := int32(6)
-        ttlSeconds := int32(3600 * 24 * 2)
+	backoffLimit := int32(6)
+	ttlSeconds := int32(3600 * 24 * 2)
 
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -119,11 +119,11 @@ func convertJob(url, namespace, name, secretName, bucketName, amqpBody string) *
 			},
 		},
 		Spec: batchv1.JobSpec{
-                        BackoffLimit: &backoffLimit,
-                        TTLSecondsAfterFinished: &ttlSeconds,
+			BackoffLimit:            &backoffLimit,
+			TTLSecondsAfterFinished: &ttlSeconds,
 			Template: v1.PodTemplateSpec{
 				Spec: v1.PodSpec{
-                                        RestartPolicy: v1.RestartPolicyNever,
+					RestartPolicy: v1.RestartPolicyNever,
 					Containers: []v1.Container{
 						{
 							Name:  "downloader",

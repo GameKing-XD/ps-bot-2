@@ -1,7 +1,7 @@
 package web
 
 import (
-	"github.com/labstack/echo/v4"
+	echo "github.com/labstack/echo/v4"
 	"github.com/tvanriel/ps-bot-2/internal/queues"
 	"github.com/tvanriel/ps-bot-2/internal/repositories"
 	"github.com/tvanriel/ps-bot-2/internal/soundstore"

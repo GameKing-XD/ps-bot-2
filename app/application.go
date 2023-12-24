@@ -16,8 +16,6 @@ import (
 	"github.com/tvanriel/ps-bot-2/internal/soundstore"
 	"github.com/tvanriel/ps-bot-2/internal/web"
 	"go.uber.org/fx"
-	"go.uber.org/fx/fxevent"
-	"go.uber.org/zap"
 )
 
 func DiscordBot() {
@@ -33,9 +31,7 @@ func DiscordBot() {
 			config.SaverConfiguration,
 			config.AmqpConfiguration,
 		),
-		fx.WithLogger(func(l *zap.Logger) fxevent.Logger {
-			return &fxevent.ZapLogger{Logger: l}
-		}),
+		fx.WithLogger(logging.FXLogger()),
 		mysql.Module,
 		logging.Module,
 		player.Module,
@@ -62,9 +58,7 @@ func Web() {
 			config.S3Configuration,
 			config.StorageConfiguration,
 		),
-		fx.WithLogger(func(l *zap.Logger) fxevent.Logger {
-			return &fxevent.ZapLogger{Logger: l}
-		}),
+		fx.WithLogger(logging.FXLogger()),
 		mysql.Module,
 		http.Module,
 		web.Module,
