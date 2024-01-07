@@ -42,45 +42,9 @@ dca /tmp/source /tmp/output.dca
 
 mcli cp /tmp/output.dca target/$TARGET/$FILENAME.dca 
 
-
-if [ ! -z "$POST_HOOK" ]; then
-        if [ -z "$AMQP_SERVER" ]; then
-                echo "AMQP_SERVER env var is empty"
-                exit 1
-        fi
-
-        if [ -z "$AMQP_USER" ]; then
-                echo "AMQP_USER env var is empty"
-                exit 1
-        fi
-
-        if [ -z "$AMQP_PASS" ]; then
-                echo "AMQP_PASS env var is empty"
-                exit 1
-        fi
-
-        if [ -z "$AMQP_CHAN" ]; then
-                echo "AMQP_CHAN env var is empty"
-                exit 1
-        fi
-        if [ -z "$AMQP_BODY" ]; then
-                echo "AMQP_BODY env var is empty"
-                exit 1
-        fi
-
-        if [ -z "$AMQP_CONTENT_TYPE" ];then
-                AMQP_CONTENT_TYPE="application/json"
-        fi
-
-
-        amqp-publish \
-                --username "$AMQP_USER" \
-                --password "$AMQP_PASS" \
-                -s "$AMQP_SERVER" \
-                -b "$AMQP_BODY" \
-                -r "$AMQP_CHAN" \
-                -e "$AMQP_EXCHANGE"
-
-fi
-
-
+redis-cli \
+        -h "$REDIS_HOSTNAME" \
+        -p "$REDIS_PORT" \
+        -a "$REDIS_PASSWORD" \
+        -n "$REDIS_DATABASE_INDEX" \
+        PUBLISH "$REDIS_CHAN" "$REDIS_PAYLOAD"

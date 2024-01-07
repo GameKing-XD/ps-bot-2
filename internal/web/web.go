@@ -2,6 +2,7 @@ package web
 
 import (
 	echo "github.com/labstack/echo/v4"
+	"github.com/tvanriel/cloudsdk/prometheus"
 	"github.com/tvanriel/ps-bot-2/internal/queues"
 	"github.com/tvanriel/ps-bot-2/internal/repositories"
 	"github.com/tvanriel/ps-bot-2/internal/soundstore"
@@ -22,6 +23,7 @@ type NewWebQueueParams struct {
 	Queue *queues.SoundsQueue
 	Store *soundstore.SoundStore
 	Log   *zap.Logger
+        Prometheus *prometheus.Prometheus
 }
 
 func NewWeb(p NewWebQueueParams) (*Web, error) {

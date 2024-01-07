@@ -4,9 +4,11 @@ import (
 	"errors"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/tvanriel/ps-bot-2/internal/metrics"
 	"github.com/tvanriel/ps-bot-2/internal/queues"
 	"github.com/tvanriel/ps-bot-2/internal/repositories"
 	"github.com/tvanriel/ps-bot-2/internal/soundstore"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -17,44 +19,51 @@ type Player struct {
 	log   *zap.Logger
 	repo  *repositories.GuildRepository
 	store *soundstore.SoundStore
+        Metrics *metrics.MetricsCollector
 }
 
-func NewPlayer(log *zap.Logger, repo *repositories.GuildRepository, store *soundstore.SoundStore, queue *queues.SoundsQueue) *Player {
+type NewPlayerParams struct {
+        fx.In
+Log *zap.Logger
+        Repo *repositories.GuildRepository
+        Store *soundstore.SoundStore
+        Queue *queues.SoundsQueue
+        Metrics *metrics.MetricsCollector
+}
+
+func NewPlayer(params NewPlayerParams) *Player {
 	return &Player{
-		queue: queue,
-		log:   log,
-		repo:  repo,
-		store: store,
+		queue: params.Queue,
+		log:   params.Log.Named("player"),
+		repo:  params.Repo,
+		store: params.Store,
+                Metrics: params.Metrics,
 	}
 }
 
 func (p *Player) Connect(ses *discordgo.Session, guildId string) error {
 
+	log := p.log.With(zap.String("guildId", guildId))
 	conn, err := p.attemptConnect(ses, guildId)
 	if err != nil {
 		return err
 	}
-	p.log.Info("Connected to voicechannel", zap.String("guild", guildId))
+	log.Info("Connected to voicechannel")
 
-	msgs, err := p.queue.Consume(guildId)
+	msgs := p.queue.Consume(guildId)
 
-	if err != nil {
-		return err
-	}
 	go func() {
-
+		log.Info("Looping for messages")
 		for m := range msgs {
 			s := m.Sound
-			p.log.Info("playing sound",
+			log.Info("playing sound",
 				zap.String("sound", s),
-				zap.String("guildId", guildId),
 			)
 
 			reader, err := p.store.Find(guildId, s)
 			if err != nil {
-				p.log.Warn("Could not play sound, store does not contain sound",
+				log.Warn("Could not play sound, store does not contain sound",
 					zap.String("sound", s),
-					zap.String("guildId", guildId),
 				)
 				continue
 			}
@@ -64,6 +73,7 @@ func (p *Player) Connect(ses *discordgo.Session, guildId string) error {
 				continue
 			}
 
+                        p.Metrics.PlaySound(guildId, s)
 			err = conn.Speaking(true)
 			if err != nil {
 				continue

@@ -4,27 +4,29 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
-	"github.com/tvanriel/cloudsdk/amqp"
 	"github.com/tvanriel/cloudsdk/http"
 	"github.com/tvanriel/cloudsdk/kubernetes"
 	"github.com/tvanriel/cloudsdk/logging"
 	"github.com/tvanriel/cloudsdk/mysql"
+	"github.com/tvanriel/cloudsdk/prometheus"
+	"github.com/tvanriel/cloudsdk/redis"
 	"github.com/tvanriel/cloudsdk/s3"
-	"github.com/tvanriel/ps-bot-2/internal/commands"
 	"github.com/tvanriel/ps-bot-2/internal/discord"
+	"github.com/tvanriel/ps-bot-2/internal/saver"
 	"github.com/tvanriel/ps-bot-2/internal/soundstore"
 )
 
 type Configuration struct {
-	MySQL      mysql.Configuration         `mapstructure:"mysql"`
-	Logging    logging.Configuration       `mapstructure:"log"`
-	Discord    discord.Configuration       `mapstructure:"discord"`
-	S3         s3.Configuration            `mapstructure:"s3"`
-	Storage    soundstore.Configuration    `mapstructure:"storage"`
-	Kubernetes kubernetes.Configuration    `mapstructure:"kubernetes"`
-	Saver      commands.SaverConfiguration `mapstructure:"saver"`
-	Http       http.Configuration          `mapstructure:"http"`
-	Amqp       amqp.Configuration          `mapstructure:"amqp"`
+	MySQL      mysql.Configuration      `mapstructure:"mysql"`
+	Logging    logging.Configuration    `mapstructure:"log"`
+	Discord    discord.Configuration    `mapstructure:"discord"`
+	S3         s3.Configuration         `mapstructure:"s3"`
+	Storage    soundstore.Configuration `mapstructure:"storage"`
+	Kubernetes kubernetes.Configuration `mapstructure:"kubernetes"`
+	Saver      saver.Configuration      `mapstructure:"saver"`
+	Http       http.Configuration       `mapstructure:"http"`
+	Redis      redis.Configuration      `mapstructure:"redis"`
+        Prometheus prometheus.Configuration `mapstructure:"prometheus"`
 }
 
 func ViperConfiguration() (Configuration, error) {
@@ -71,7 +73,7 @@ func StorageConfiguration(config Configuration) *soundstore.Configuration {
 func KubernetesConfiguration(config Configuration) *kubernetes.Configuration {
 	return &config.Kubernetes
 }
-func SaverConfiguration(config Configuration) *commands.SaverConfiguration {
+func SaverConfiguration(config Configuration) *saver.Configuration {
 	return &config.Saver
 }
 
@@ -79,6 +81,9 @@ func HttpConfiguration(config Configuration) http.Configuration {
 	return config.Http
 }
 
-func AmqpConfiguration(config Configuration) amqp.Configuration {
-	return config.Amqp
+func RedisConfiguration(config Configuration) redis.Configuration {
+	return config.Redis
+}
+func PrometheusConfiguration(config Configuration) prometheus.Configuration {
+        return config.Prometheus
 }

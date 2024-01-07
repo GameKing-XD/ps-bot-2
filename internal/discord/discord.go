@@ -1,11 +1,13 @@
 package discord
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/tvanriel/ps-bot-2/internal/commands"
+	"github.com/tvanriel/ps-bot-2/internal/metrics"
 	"github.com/tvanriel/ps-bot-2/internal/player"
 	"github.com/tvanriel/ps-bot-2/internal/queues"
 	"github.com/tvanriel/ps-bot-2/internal/repositories"
@@ -21,6 +23,7 @@ type DiscordBot struct {
 	Player *player.Player
 	Exe    *commands.Executor
 	Queue  *queues.MessageQueue
+        Metrics *metrics.MetricsCollector
 }
 
 type NewDiscordParams struct {
@@ -32,9 +35,10 @@ type NewDiscordParams struct {
 	Player *player.Player
 	Exe    *commands.Executor
 	Queue  *queues.MessageQueue
+        Metrics *metrics.MetricsCollector
 }
 
-func NewDiscord(p NewDiscordParams) (*DiscordBot, error) {
+func NewDiscord(p NewDiscordParams, lc fx.Lifecycle) (*DiscordBot, error) {
 	ses, err := discordgo.New("Bot " + p.Config.BotToken)
 
 	if err != nil {
@@ -42,7 +46,7 @@ func NewDiscord(p NewDiscordParams) (*DiscordBot, error) {
 	}
 	ses.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAllWithoutPrivileged)
 
-	return &DiscordBot{
+        bot := &DiscordBot{
 		Conn:   ses,
 		Repo:   p.Repo,
 		Ready:  false,
@@ -50,7 +54,20 @@ func NewDiscord(p NewDiscordParams) (*DiscordBot, error) {
 		Exe:    p.Exe,
 		Player: p.Player,
 		Queue:  p.Queue,
-	}, nil
+                Metrics: p.Metrics,
+	}
+        lc.Append(fx.Hook{
+                OnStart: func(ctx context.Context) error {
+                        go func() {
+
+                                bot.Connect() 
+                        }()
+                        return nil
+                        
+                },
+        })
+
+        return bot, nil
 }
 
 func (d *DiscordBot) AddHandlers() error {
@@ -61,10 +78,7 @@ func (d *DiscordBot) AddHandlers() error {
 }
 
 func (d *DiscordBot) ListenQueuedMessages() error {
-	msgs, err := d.Queue.Consume()
-	if err != nil {
-		return err
-	}
+	msgs := d.Queue.Consume()
 	go func() {
 
 		for m := range msgs {

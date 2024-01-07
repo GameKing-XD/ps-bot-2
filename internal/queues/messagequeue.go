@@ -1,29 +1,32 @@
 package queues
 
 import (
+	"context"
 	"encoding/json"
 
-	"github.com/tvanriel/cloudsdk/amqp"
+	"github.com/tvanriel/cloudsdk/redis"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 type MessageQueue struct {
-	Amqp *amqp.Connection
-	Log  *zap.Logger
+	Log   *zap.Logger
+	Redis *redis.RedisClient
 }
 
 type NewMessageQueueParams struct {
 	fx.In
 
-	Amqp *amqp.Connection
-	Log  *zap.Logger
+	Redis *redis.RedisClient
+	Log   *zap.Logger
 }
+
+const REDIS_CHAN = "messages"
 
 func NewMessageQueue(p NewMessageQueueParams) *MessageQueue {
 	return &MessageQueue{
-		Amqp: p.Amqp,
-		Log:  p.Log.Named("messagequeue"),
+		Log:   p.Log.Named("messagequeue"),
+		Redis: p.Redis,
 	}
 
 }
@@ -34,36 +37,34 @@ type QueuedMessage struct {
 	Content   string `json:"content"`
 }
 
-func (m *MessageQueue) Consume() (chan QueuedMessage, error) {
+func (m *MessageQueue) Consume() chan *QueuedMessage {
+	pubsub := m.Redis.Conn().Subscribe(context.Background(), REDIS_CHAN)
+	rch := pubsub.Channel()
+	mch := make(chan *QueuedMessage)
+        go func() {
 
-	out := make(chan QueuedMessage)
-	ch, err := m.Amqp.Channel()
-	if err != nil {
-		return nil, err
-	}
-
-	ch.QueueDeclare("messages", false, false, false, true, nil)
-	if err != nil {
-		return nil, err
-	}
-	msgs, err := ch.Consume("messages", "", true, false, false, true, nil)
-
-	if err != nil {
-		return out, err
-	}
-	go func() {
-		for x := range msgs {
-			m.Log.Info("Recv on AMQP Messages queue", zap.String("body", string(x.Body)))
-			message := QueuedMessage{}
-			err := json.Unmarshal(x.Body, &message)
-			if err != nil {
-				m.Log.Error("cannot unmarshal message from messagequeue", zap.Error(err))
-				continue
-			}
-			out <- message
-
+	for rm := range rch {
+		var qm *QueuedMessage
+		err := json.Unmarshal([]byte(rm.Payload), qm)
+		if err != nil {
+			m.Log.Error("Cannot Unmarshal message from redis subscribe", zap.Error(err))
+			continue
 		}
-	}()
 
-	return out, nil
+		mch <- qm
+
+	}
+        }()
+	return mch
+}
+
+func (m *MessageQueue) Append(msg QueuedMessage) error {
+	b, err := json.Marshal(msg)
+
+	if err != nil {
+		return err
+	}
+	cmd := m.Redis.Conn().Publish(context.Background(), REDIS_CHAN, b)
+
+	return cmd.Err()
 }

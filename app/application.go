@@ -1,18 +1,21 @@
 package app
 
 import (
-	"github.com/tvanriel/cloudsdk/amqp"
 	"github.com/tvanriel/cloudsdk/http"
 	"github.com/tvanriel/cloudsdk/kubernetes"
 	"github.com/tvanriel/cloudsdk/logging"
 	"github.com/tvanriel/cloudsdk/mysql"
+	"github.com/tvanriel/cloudsdk/prometheus"
+	"github.com/tvanriel/cloudsdk/redis"
 	"github.com/tvanriel/cloudsdk/s3"
 	"github.com/tvanriel/ps-bot-2/internal/commands"
 	"github.com/tvanriel/ps-bot-2/internal/config"
 	"github.com/tvanriel/ps-bot-2/internal/discord"
+	"github.com/tvanriel/ps-bot-2/internal/metrics"
 	"github.com/tvanriel/ps-bot-2/internal/player"
 	"github.com/tvanriel/ps-bot-2/internal/queues"
 	"github.com/tvanriel/ps-bot-2/internal/repositories"
+	"github.com/tvanriel/ps-bot-2/internal/saver"
 	"github.com/tvanriel/ps-bot-2/internal/soundstore"
 	"github.com/tvanriel/ps-bot-2/internal/web"
 	"go.uber.org/fx"
@@ -25,25 +28,28 @@ func DiscordBot() {
 			config.MySQLConfiguration,
 			config.DiscordConfiguration,
 			config.LoggingConfiguration,
+                        config.PrometheusConfiguration,
 			config.StorageConfiguration,
 			config.S3Configuration,
 			config.KubernetesConfiguration,
 			config.SaverConfiguration,
-			config.AmqpConfiguration,
+			config.RedisConfiguration,
 		),
-		fx.WithLogger(logging.FXLogger()),
+		logging.FXLogger(),
 		mysql.Module,
 		logging.Module,
 		player.Module,
 		discord.Module,
 		repositories.Module,
 		commands.Module,
+                prometheus.Module,
 		soundstore.Module,
 		s3.Module,
+		saver.Module,
 		kubernetes.Module,
-		amqp.Module,
+		redis.Module,
 		queues.Module,
-		fx.Invoke(func(_ *discord.DiscordBot) {}),
+                metrics.Module,
 	).Run()
 }
 
@@ -53,21 +59,22 @@ func Web() {
 			config.ViperConfiguration,
 			config.MySQLConfiguration,
 			config.HttpConfiguration,
-			config.AmqpConfiguration,
+			config.RedisConfiguration,
 			config.LoggingConfiguration,
 			config.S3Configuration,
 			config.StorageConfiguration,
+                        config.PrometheusConfiguration,
 		),
-		fx.WithLogger(logging.FXLogger()),
+		logging.FXLogger(),
 		mysql.Module,
 		http.Module,
 		web.Module,
-		amqp.Module,
+		redis.Module,
 		logging.Module,
 		repositories.Module,
 		soundstore.Module,
+                prometheus.Module,
 		queues.Module,
 		s3.Module,
-		fx.Invoke(http.Listen),
 	).Run()
 }

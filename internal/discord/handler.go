@@ -20,6 +20,7 @@ func guildCreate(d *DiscordBot) func(*discordgo.Session, *discordgo.GuildCreate)
 	return func(s *discordgo.Session, gc *discordgo.GuildCreate) {
 		go d.Repo.LoadGuild(gc.ID, gc.Name, gc.IconURL("128"))
 		go d.Player.Connect(s, gc.ID)
+                d.Metrics.RegisterGuild(gc.ID)
 
 	}
 }
